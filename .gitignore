@@ -4,5 +4,6 @@
 # transfer-shot from avery's paper
 transfer-shot/
 
-# finetuning data, incl. model replay
-data/ 
+# finetuning data
+data/
+ 
