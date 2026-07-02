@@ -2,16 +2,16 @@
 .DS_Store
 
 # finetuning data
-data/
+data/*
  
 # everything except for pipeline notebook in model folder
-mace-mh-1/
+mace-mh-1/**
 !mace-mh-1/mace-ft-pipeline.ipynb
 
 # data cleaning cache contents
-data-processing/cache/
-!.gitkeep
+data-processing/cache/*
+!data-processing/cache/.gitkeep
 
 # training data
-training-data/
+training-data/*
 !.gitkeep
