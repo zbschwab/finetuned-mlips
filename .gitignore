@@ -1,19 +1,25 @@
 # macOS
 .DS_Store
 
-# env
+# pre-processing
 data-processing/.env
+data-processing/incars.zip
+data-processing/outcars.zip
 
 # finetuning data
-data/*
+training-data/*
  
-# everything except for pipeline notebook in model folder
-mace-mh-1/**
-!mace-mh-1/mace-ft-pipeline.ipynb
+# everything except for pipeline notebooks and folders in model folder
+mace-mh-1/checkpoints/*
+mace-mh-1/logs/*
+mace-mh-1/models/*
+mace-mh-1/results/*
+#!mace-mh-1/mace-ft-pipeline.ipynb
+!mace-mh-1/results/post-processing.ipynb
 
 # data cleaning cache contents
-data-processing/cache/*
-!data-processing/cache/.gitkeep
+#data-processing/cache/*
+#!data-processing/cache/.gitkeep
 
 # training data
 training-data/*
