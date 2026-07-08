@@ -2,7 +2,7 @@
 .DS_Store
 
 # for when using pipeline w/o making structural changes
-data-processing/ag-data-selection.ipynb
+# data-processing/ag-data-selection.ipynb
 
 # pre-processing
 data-processing/.env
