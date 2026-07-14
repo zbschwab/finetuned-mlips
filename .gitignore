@@ -10,6 +10,7 @@ data-processing/incars.zip
 data-processing/outcars.zip
 data-processing/incars/*
 data-processing/outcars/*
+data-processing/*.png
 
 # finetuning data
 training-data/*
