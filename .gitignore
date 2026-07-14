@@ -8,6 +8,8 @@
 data-processing/.env
 data-processing/incars.zip
 data-processing/outcars.zip
+data-processing/incars/*
+data-processing/outcars/*
 
 # finetuning data
 training-data/*
