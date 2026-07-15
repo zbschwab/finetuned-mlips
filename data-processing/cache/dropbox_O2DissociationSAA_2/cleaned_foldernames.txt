@@ -1,6 +1,7 @@
 2OAg
 O2AdsAg
 2O_subAg
+Ni0O6Ag
 O4Ag_Tetra_1
 O4Ag_Tetra_2
 O2Above_OonAg
@@ -13,6 +14,10 @@ O8Ag_Ag5O+2O
 O7Ag_Ag5O+1O
 Ag4O_OnAg_O2+2O
 O4Ag_OnAg_2x3
+OMC_Ni0Ag0
+OxE+HSurf_Ni0Ag1
+Acetaldehyde_Ni0O0Ag
+HSurfToAA_1_Ni0O0Ag
 1O_OsubAg_2x2
 Ag_2x2
 1O_Ag_2x2
@@ -60,6 +65,8 @@ PropOCCO_Ag7
 O+PropOMC_Ag0
 O+PropOMC_Ag1
 O+PropOMC_Ag2
+Ni0Ag_100
+O_Bridge_Ni0Ag_100
 Ag_rec_0_1_vac79
 Ag_rec_0_1_vac81
 Ag_rec_0_O2_0
@@ -145,7 +152,9 @@ Ag100_Ethylene_1
 Ag_OxideRing_O2_vac_upper
 O+O_sub_5x5_vac
 O+O_sub_5x5
+OMC_Ni0Ag1
 OsubAg_2x2
+O_Ni0Ag_100
 Ag_100_2x4_rec
 CO3_Osub_Ag111_2x2
 O2_Osub_Ag100
@@ -161,3 +170,4 @@ Ag100_O5Phase_Ovac
 Ag100_O5Phase_CO3Substitution_withsub
 Ag100_O5Phase_O2_withsub
 Ag100_O5Phase_Ovac_withsub
+Ni0Ag_100_DOS
