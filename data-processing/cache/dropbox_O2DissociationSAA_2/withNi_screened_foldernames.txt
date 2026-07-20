@@ -21,7 +21,6 @@ CO+O_Ni1Ag_alt
 OMC_Ni1Ag0
 OMC_Ni0Ag0
 COAds_Ni3Ag_0
-COAds_Ni3Ag_2
 OMC_Ni1Ag1
 OxE+HSurf_Ni0Ag1
 OxE+HSurf_Ni1Ag1
@@ -35,7 +34,6 @@ OMC_Ag_rec2
 OMC_Ag_rec3
 OMC+1O_Ni1Ag0
 OMC+1O_Ni1Ag1
-OMC_alt0+1O_Ni1Ag0
 OMC_alt0+1O_Ni1Ag1
 OMC_alt1+1O_Ni1Ag0
 OMC_alt1+1O_Ni1Ag1
@@ -137,7 +135,6 @@ OMC+CO3_alt2_0
 OMC_2H_Ni1Ag0
 OMC_2H_Ni1Ag2
 OMC_2H_Ni1Ag1
-OMC+Formate_0
 OMC+CO3H2_0
 OMC+Formate_alt1_0
 OMC+CO3_alt1_0
@@ -237,11 +234,9 @@ Ag100_AddedRowNoO_2x3
 Ag100_O+Ethylene_1
 Ag100_O+Ethylene_2
 Ag100_O+Ethylene_3
-Ag100_OMC
 Ag100_EDO
 Ag100_O+Ethylene_4
 Ag100_Ethylene_1
-O2_Ni1Ag_alt1
 O+O_sub_5x5_vac
 O+O_sub_5x5
 Ni2O6Ag_4x4_1
