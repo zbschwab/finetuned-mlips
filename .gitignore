@@ -22,7 +22,7 @@ mace-mh-1/logs/*
 mace-mh-1/models/*
 mace-mh-1/results/*
 #!mace-mh-1/mace-ft-pipeline.ipynb
-!mace-mh-1/results/post-processing.ipynb
+#!mace-mh-1/results/post-processing.ipynb
 
 # data cleaning cache contents
 #data-processing/cache/*
