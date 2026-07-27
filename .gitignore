@@ -31,3 +31,7 @@ mace-mh-1/results/*
 # training data
 training-data/*
 !.gitkeep
+
+# test bash script (for cv-optuna pipeline)
+mace-mh-1/cv-optuna/test_pipeline.sh
+
