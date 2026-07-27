@@ -131,3 +131,17 @@ def submit_and_wait(
             return job_id, state, log_path
 
         time.sleep(poll_interval)
+
+def restart_job(script_path, log_dir, max_retries=2, **kwargs):
+    """Submit a job, resubmitting on TIMEOUT up to max_retries.
+    Each resubmission resumes from the last MACE checkpoint.
+
+    Returns:
+        tuple: (job_id, state, log_path) from final attempt.
+    """
+    job_id, state, log_path = None, None, None
+    for attempt in range(max_retries + 1):
+        job_id, state, log_path = submit_and_wait(script_path, log_dir, **kwargs)
+        if state != "TIMEOUT":
+            break
+    return job_id, state, log_path
