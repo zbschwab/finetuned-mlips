@@ -106,19 +106,28 @@ def submit_and_wait(
             )
 
         sacct_result = subprocess.run(
-            ["sacct", "-j", job_id, "--format=State", "--noheader", "--parsable2"],
+            [
+                "sacct",
+                "-j",
+                job_id,
+                "-X",
+                "--format=State",
+                "--noheader",
+                "--parsable2",
+            ],
             capture_output=True,
             text=True,
             check=True,
         )
-        # sacct returns multiple lines (main job + job steps); check the first (main) entry
-        states = [
-            line.strip() for line in sacct_result.stdout.splitlines() if line.strip()
-        ]
-        if states:
-            print(states)  # TEST
-            state = states[0].split()[0]  # strip any trailing CANCELLED by <uid> text
-            if any(state.startswith(t) for t in TERMINAL_STATES):
-                return job_id, state, log_path
+        # -X flag means only show output relevant to the job allocation itself,
+        # not internal steps like .batch or .extern
+
+        line = sacct_result.stdout.strip()
+        state = (
+            line.split()[0] if line else None
+        )  # strip trailing "CANCELLED by <uid>" text
+
+        if state and any(state.startswith(t) for t in TERMINAL_STATES):
+            return job_id, state, log_path
 
         time.sleep(poll_interval)
