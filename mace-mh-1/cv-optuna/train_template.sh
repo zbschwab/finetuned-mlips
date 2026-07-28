@@ -56,8 +56,8 @@ mkdir -p "$RUN_DIR"/{models,checkpoints,logs,results}
 python -m mace.cli.run_train \
 --name "${RUN_NAME}" \
 --restart_latest \
---train_file "data/${FOLD_TRAIN_FILE}" \
---valid_file "data/${FOLD_VALID_FILE}" \
+--train_file "${FOLD_TRAIN_FILE}" \
+--valid_file "${FOLD_VALID_FILE}" \
 --foundation_model mh-1 \
 --foundation_head omat_pbe \
 --pt_train_file data/selected_configs_withNi.xyz \
