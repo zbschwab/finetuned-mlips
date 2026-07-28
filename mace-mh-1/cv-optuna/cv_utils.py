@@ -5,9 +5,11 @@ Helper functions for the Optuna + k-fold CV driver: submitting SLURM jobs
 and parsing MACE training logs for RMSE metrics.
 """
 
+import json
 import re
 import subprocess
 import time
+from pathlib import Path
 
 EPOCH_PATTERN = re.compile(
     r"(?:Epoch (\d+)|(Initial)): head: (\S+), "
@@ -93,9 +95,7 @@ def submit_and_wait(
     # check for correct sbatch stdout: "Submitted batch job __"
     m = re.search(r"Submitted batch job (\d+)", result.stdout)
     if not m:
-        raise RuntimeError(
-            f"Could not parse job ID from sbatch output: {result.stdout!r}"
-        )
+        raise RuntimeError(f"Could not parse job ID from sbatch output: {result.stdout!r}")
     job_id = m.group(1)
     log_path = f"{log_dir}/{log_pattern.format(job_id=job_id)}"
 
@@ -103,9 +103,7 @@ def submit_and_wait(
     start_time = time.time()
     while True:
         if timeout is not None and (time.time() - start_time) > timeout:
-            raise TimeoutError(
-                f"Job {job_id} did not reach a terminal state within {timeout}s"
-            )
+            raise TimeoutError(f"Job {job_id} did not reach a terminal state within {timeout}s")
 
         sacct_result = subprocess.run(
             [
@@ -125,9 +123,7 @@ def submit_and_wait(
         # not internal steps like .batch or .extern
 
         line = sacct_result.stdout.strip()
-        state = (
-            line.split()[0] if line else None
-        )  # strip trailing "CANCELLED by <uid>" text
+        state = line.split()[0] if line else None  # strip trailing "CANCELLED by <uid>" text
 
         if state and any(state.startswith(t) for t in TERMINAL_STATES):
             return job_id, state, log_path
@@ -153,3 +149,43 @@ def restart_job(script_path, log_dir, max_retries=2, **kwargs):
     raise RuntimeError(
         f"Job {job_id} still TIMEOUT after {max_retries} retries (script={script_path})"
     )
+
+
+def _load_cache(cache_path):
+    p = Path(cache_path)
+    if not p.exists():
+        return {}
+    with open(p) as f:
+        return json.load(f)
+
+
+def get_fold_result(trial_number, fold_id, cache_path):
+    """Return cached fold metrics, or None if this fold hasn't completed.
+
+    Args:
+        trial_number: Optuna trial.number
+        fold_id: fold index
+        cache_path: path to fold_cache.json
+
+    Returns:
+        dict {'RMSE_E_per_atom': float, 'RMSE_F': float} or None
+    """
+    return _load_cache(cache_path).get(f"t{trial_number}_f{fold_id}")
+
+
+def save_fold_result(trial_number, fold_id, rmse_e, rmse_f, cache_path):
+    """Persist one completed fold's metrics. Atomic write (safe against a kill mid-write).
+
+    Args:
+        trial_number: Optuna trial.number
+        fold_id: fold index
+        rmse_e: RMSE_E_per_atom for this fold
+        rmse_f: RMSE_F for this fold
+        cache_path: path to fold_cache.json
+    """
+    cache = _load_cache(cache_path)
+    cache[f"t{trial_number}_f{fold_id}"] = {"RMSE_E_per_atom": rmse_e, "RMSE_F": rmse_f}
+    tmp = Path(cache_path).with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(cache, f)
+    tmp.replace(cache_path)
