@@ -41,8 +41,6 @@ FORCES_WEIGHT=100.0
 export HOME_DIR=/home/$USER/mace-finetune
 export WORK_DIR=/work/$USER/mace-finetune
 
-mkdir -p "$WORK_DIR/data"
-cp -r "$HOME_DIR"/data/. "$WORK_DIR"/data/
 cd "$WORK_DIR"
 
 module load conda/23.11.0
