@@ -11,9 +11,6 @@ import subprocess
 import time
 from pathlib import Path
 
-SBATCH_BIN = "/usr/local/bin/sbatch"
-SACCT_BIN = "/usr/bin/sacct"
-
 EPOCH_PATTERN = re.compile(
     r"(?:Epoch (\d+)|(Initial)): head: (\S+), "
     r"loss=([\d.]+), "
@@ -92,7 +89,7 @@ def submit_and_wait(
         tuple: (str: job_id, str: state, str: log_path)
     """
     # submit sbatch job to LONI
-    cmd = [SBATCH_BIN, script_path] + [str(a) for a in (job_args or [])]
+    cmd = ["sbatch", script_path] + [str(a) for a in (job_args or [])]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     # check for correct sbatch stdout: "Submitted batch job __"
@@ -110,7 +107,7 @@ def submit_and_wait(
 
         sacct_result = subprocess.run(
             [
-                SACCT_BIN,
+                "sacct",
                 "-j",
                 job_id,
                 "-X",
