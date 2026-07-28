@@ -68,6 +68,7 @@ def parse_log(log_path, head="Default"):
 def submit_and_wait(
     script_path,
     log_dir,
+    job_args=None,
     log_pattern="cv_test_{job_id}.out",
     poll_interval=30,
     timeout=None,
@@ -77,6 +78,7 @@ def submit_and_wait(
     Args:
         script_path: path to sbatch script to submit
         log_dir: directory containing the .out log (matches #SBATCH -o in script)
+        job_args: list of positional args passed to sbatch script
         log_pattern: log filename pattern w/ job_id placeholder
         poll_interval: secs. between sacct polls
         timeout: (optional) max secs. to wait before terminating
@@ -85,7 +87,7 @@ def submit_and_wait(
         tuple: (str: job_id, str: state, str: log_path)
     """
     # submit sbatch job to LONI
-    cmd = ["sbatch", script_path]
+    cmd = ["sbatch", script_path] + [str(a) for a in (job_args or [])]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     # check for correct sbatch stdout: "Submitted batch job __"
@@ -132,9 +134,13 @@ def submit_and_wait(
 
         time.sleep(poll_interval)
 
+
 def restart_job(script_path, log_dir, max_retries=2, **kwargs):
     """Submit a job, resubmitting on TIMEOUT up to max_retries.
     Each resubmission resumes from the last MACE checkpoint.
+
+    Raises:
+        RuntimeError: if the job is still TIMEOUT after max_retries resubmits.
 
     Returns:
         tuple: (job_id, state, log_path) from final attempt.
@@ -143,5 +149,7 @@ def restart_job(script_path, log_dir, max_retries=2, **kwargs):
     for attempt in range(max_retries + 1):
         job_id, state, log_path = submit_and_wait(script_path, log_dir, **kwargs)
         if state != "TIMEOUT":
-            break
-    return job_id, state, log_path
+            return job_id, state, log_path
+    raise RuntimeError(
+        f"Job {job_id} still TIMEOUT after {max_retries} retries (script={script_path})"
+    )

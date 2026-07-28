@@ -80,6 +80,7 @@ python -m mace.cli.run_train \
 --swa_lr "${SWA_LR}" \
 --multiheads_finetuning True \
 --E0s "{47: -0.19458509, 28: -0.59150255, 8: -1.55774442, 6: -1.28369203, 1: -1.11167391}" \
+--atomic_numbers "[1, 6, 8, 28, 47]" \
 --max_num_epochs 30 \
 --device "cuda"
 
