@@ -7,13 +7,16 @@ Completed trials (one 4-fold run) cached in `optuna_study.log`, but no fold-leve
 
 import statistics
 import optuna
-from cv_utils import parse_log, restart_job
+from cv_utils import parse_log, restart_job, get_fold_result, save_fold_result
 
 HOME_DIR = "/home/zschwab/mace-finetune"
-SCRIPT = f"{HOME_DIR}/cv-optuna/train_template.sh"
-LOG_DIR = "/work/zschwab/mace-finetune/logs"
-FOLD_DIR = f"{HOME_DIR}/data/folds"
+WORK_DIR = "/work/zschwab/mace-finetune"
+
+SCRIPT = f"{HOME_DIR}/scripts/train_template.sh"
+LOG_DIR = f"{WORK_DIR}/logs"
+FOLD_DIR = f"{WORK_DIR}/data/folds"
 STUDY_LOG = f"{HOME_DIR}/cv-optuna/optuna_study.log"
+FOLD_CACHE = f"{HOME_DIR}/cv-optuna/fold_cache.json"
 
 N_FOLDS = 4
 MAX_RETRIES = 2
@@ -58,6 +61,12 @@ def objective(trial):
     fold_rmse_f, fold_rmse_e = [], []
 
     for fold_id in range(N_FOLDS):
+        cached = get_fold_result(trial.number, fold_id, FOLD_CACHE)
+        if cached is not None:
+            fold_rmse_f.append(cached["RMSE_F"])
+            fold_rmse_e.append(cached["RMSE_E_per_atom"])
+            continue
+
         job_args = [
             trial.number,
             fold_id,
@@ -87,6 +96,9 @@ def objective(trial):
         if metrics is None:
             raise optuna.TrialPruned(f"fold {fold_id}: no metrics parsed from {log_path}")
 
+        save_fold_result(
+            trial.number, fold_id, metrics["RMSE_E_per_atom"], metrics["RMSE_F"], FOLD_CACHE
+        )
         fold_rmse_f.append(metrics["RMSE_F"])
         fold_rmse_e.append(metrics["RMSE_E_per_atom"])
 
