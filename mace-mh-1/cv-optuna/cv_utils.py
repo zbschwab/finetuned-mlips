@@ -70,8 +70,10 @@ def parse_log(log_path, head="Default"):
 def submit_and_wait(
     script_path,
     log_dir,
+    trial_id,
+    fold_id,
     job_args=None,
-    log_pattern="cv_test_{job_id}.out",
+    log_pattern="mace_t{trial_id}_f{fold_id}_{job_id}.out",
     poll_interval=30,
     timeout=None,
 ):
@@ -80,6 +82,8 @@ def submit_and_wait(
     Args:
         script_path: path to sbatch script to submit
         log_dir: directory containing the .out log (matches #SBATCH -o in script)
+        trial_id: Optuna trial number
+        fold_id: fold index
         job_args: list of positional args passed to sbatch script
         log_pattern: log filename pattern w/ job_id placeholder
         poll_interval: secs. between sacct polls
@@ -88,8 +92,16 @@ def submit_and_wait(
     Returns:
         tuple: (str: job_id, str: state, str: log_path)
     """
+    out_pattern = log_pattern.format(trial_id=trial_id, fold_id=fold_id, job_id="%j")
+    err_pattern = out_pattern.replace(".out", ".err")
+
     # submit sbatch job to LONI
-    cmd = ["sbatch", script_path] + [str(a) for a in (job_args or [])]
+    cmd = [
+        "sbatch",
+        f"--output={log_dir}/{out_pattern}",
+        f"--error={log_dir}/{err_pattern}",
+        script_path,
+    ] + [str(a) for a in (job_args or [])]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     # check for correct sbatch stdout: "Submitted batch job __"
@@ -97,7 +109,7 @@ def submit_and_wait(
     if not m:
         raise RuntimeError(f"Could not parse job ID from sbatch output: {result.stdout!r}")
     job_id = m.group(1)
-    log_path = f"{log_dir}/{log_pattern.format(job_id=job_id)}"
+    log_path = f"{log_dir}/{log_pattern.format(trial_id=trial_id, fold_id=fold_id, job_id=job_id)}"
 
     # poll log output from LONI with sacct
     start_time = time.time()
