@@ -116,6 +116,42 @@ def objective(trial):
     return combined
 
 
+def replay_stop_state(completed_trials):
+    """Reconstruct prev_best / no_improve / noise_streak by replaying the
+    history of already-completed trials in number order. Needed on resume
+    so counters reflect full trial history.
+
+    Args:
+        completed_trials: list of optuna.trial.FrozenTrial with
+            state == COMPLETE, any order.
+
+    Returns:
+        tuple: (prev_best: float, no_improve: int, noise_streak: int)
+    """
+    prev_best = float("inf")
+    no_improve = 0
+    noise_streak = 0
+
+    for t in sorted(completed_trials, key=lambda t: t.number):
+        value = t.value
+        fold_std = t.user_attrs.get("fold_std", 0.0)
+        improved = value < prev_best
+        delta = prev_best - value if improved else 0.0
+
+        if improved:
+            prev_best = value
+            no_improve = 0
+        else:
+            no_improve += 1
+
+        if improved and 0 < delta < fold_std:
+            noise_streak += 1
+        else:
+            noise_streak = 0
+
+    return prev_best, no_improve, noise_streak
+
+
 def main():
     storage = optuna.storages.JournalStorage(optuna.storages.JournalFileStorage(STUDY_LOG))
     study = optuna.create_study(
@@ -128,15 +164,21 @@ def main():
 
     # seed state from any already-completed trials (handles resuming an Optuna study)
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
-    prev_best = min((t.value for t in completed), default=float("inf"))
-    no_improve = 0
-    noise_streak = 0
+    prev_best, no_improve, noise_streak = replay_stop_state(completed)
+
+    # Gate warm-up on trials run this session, not trial.number: trial.number
+    # persists across resumes, so it would already exceed N_STARTUP_TRIALS
+    # on any resumed run, disabling the warm-up when it's still needed.
+
+    session_trial_count = 0
 
     for _ in range(MAX_TRIALS):
         study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
         trial = study.trials[-1]
         if trial.state != optuna.trial.TrialState.COMPLETE:
             continue
+
+        session_trial_count += 1
 
         value = trial.value
         fold_std = trial.user_attrs.get("fold_std", 0.0)
@@ -149,7 +191,7 @@ def main():
         else:
             no_improve += 1
 
-        if trial.number < N_STARTUP_TRIALS:
+        if session_trial_count <= N_STARTUP_TRIALS:
             continue
 
         if improved and 0 < delta < fold_std:
