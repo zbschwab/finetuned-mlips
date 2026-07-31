@@ -6,22 +6,29 @@ Completed trials (one 4-fold run) cached in `optuna_study.log`, but no fold-leve
 """
 
 import statistics
+import os
 import optuna
 from cv_utils import parse_log, restart_job, get_fold_result, save_fold_result
+
+STUDY_NAME = "mace_cv_search"
 
 HOME_DIR = "/home/zschwab/mace-finetune"
 WORK_DIR = "/work/zschwab/mace-finetune"
 
 SCRIPT = f"{HOME_DIR}/scripts/train_template.sh"
-LOG_DIR = f"{WORK_DIR}/logs"
+LOG_DIR = f"{WORK_DIR}/logs/{STUDY_NAME}"
 FOLD_DIR = f"{WORK_DIR}/data/folds"
 STUDY_LOG = f"{HOME_DIR}/cv-optuna/optuna_study.log"
 FOLD_CACHE = f"{HOME_DIR}/cv-optuna/fold_cache.json"
+os.makedirs(LOG_DIR, exist_ok=True)
 
 N_FOLDS = 4
 MAX_RETRIES = 2
 MAX_TRIALS = 20
 NO_IMPROVE_LIMIT = 4  # only evaluated after N_STARTUP_TRIALS have completed (random phase)
+NOISE_STREAK_REQUIRED = 3  # number of consecutive trials that must improve on prev_best
+# by less than that trial's fold_std before we consider it to be a
+# real plateau (vs. one lucky noise-sized delta) and stop
 N_STARTUP_TRIALS = 10  # TPESampler default; ~2 random pts/dim across the 5-param space
 
 # weights applied to mean fold RMSE_E and F to combine them into single scalar Optuna minimizes.
@@ -112,21 +119,24 @@ def objective(trial):
 def main():
     storage = optuna.storages.JournalStorage(optuna.storages.JournalFileStorage(STUDY_LOG))
     study = optuna.create_study(
-        study_name="mace_cv_search",
+        study_name=STUDY_NAME,
         storage=storage,
         sampler=optuna.samplers.TPESampler(seed=123),  # default n_startup_trials=10
         direction="minimize",
         load_if_exists=True,
     )
 
-    prev_best = float("inf")
+    # seed state from any already-completed trials (handles resuming an Optuna study)
+    completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    prev_best = min((t.value for t in completed), default=float("inf"))
     no_improve = 0
+    noise_streak = 0
 
     for _ in range(MAX_TRIALS):
         study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
         trial = study.trials[-1]
         if trial.state != optuna.trial.TrialState.COMPLETE:
-            continue  # all folds failed/pruned; doesn't count toward stop conditions
+            continue
 
         value = trial.value
         fold_std = trial.user_attrs.get("fold_std", 0.0)
@@ -140,10 +150,15 @@ def main():
             no_improve += 1
 
         if trial.number < N_STARTUP_TRIALS:
-            continue  # don't evaluate stop conditions during TPE's random phase
+            continue
 
         if improved and 0 < delta < fold_std:
-            print(f"stop: improvement {delta:.4f} < noise floor {fold_std:.4f}")
+            noise_streak += 1
+        else:
+            noise_streak = 0
+
+        if noise_streak >= NOISE_STREAK_REQUIRED:
+            print(f"stop: {noise_streak} consecutive trials within noise floor")
             break
         if no_improve >= NO_IMPROVE_LIMIT:
             print(f"stop: {no_improve} trials without improvement")
