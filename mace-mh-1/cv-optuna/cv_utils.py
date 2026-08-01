@@ -6,6 +6,7 @@ and parsing MACE training logs for RMSE metrics.
 """
 
 import json
+import os
 import re
 import subprocess
 import time
@@ -77,7 +78,12 @@ def submit_and_wait(
     poll_interval=30,
     timeout=None,
 ):
-    """Submit sbatch script, then poll sacct to see log output until job terminates.
+    """Submit sbatch script, then poll sacct until job reaches a terminal state.
+
+    For a COMPLETED job, waits for its output log to be readable on
+    disk before returning (sacct can report COMPLETED slightly before file
+    is visible on shared storage (NFS propagation lag on /work) to avoid
+    race condition.
 
     Args:
         script_path: path to sbatch script to submit
@@ -138,7 +144,10 @@ def submit_and_wait(
         state = line.split()[0] if line else None  # strip trailing "CANCELLED by <uid>" text
 
         if state and any(state.startswith(t) for t in TERMINAL_STATES):
-            return job_id, state, log_path
+            # for a completed job, don't hand back a log_path that isn't
+            # readable yet — keep polling until it shows up (or timeout)
+            if state != "COMPLETED" or os.path.exists(log_path):
+                return job_id, state, log_path
 
         time.sleep(poll_interval)
 

@@ -62,7 +62,8 @@ def objective(trial):
         swa_forces_weight: SWA forces loss weight (uniform)
 
     Args:
-        trial: optuna.Trial for this run, passed in by study.optimize().
+        trial: optuna.Trial for this run, passed in by study.optimize()
+            or reconstructed by resume_orphaned_trials()
 
     Returns:
         float: weighted combination of mean fold RMSE_E and RMSE_F
@@ -128,7 +129,6 @@ def objective(trial):
     return combined
 
 
-
 def resume_orphaned_trials(study):
     """Finish any trial left RUNNING by a prior kill (dropped tmux session,
     SIGKILL, etc.) instead of leaving it stuck in storage indefinitely.
@@ -163,9 +163,9 @@ def resume_orphaned_trials(study):
 
 
 def replay_stop_state(completed_trials):
-    """Reconstruct prev_best / no_improve / noise_streak by replaying the
-    history of already-completed trials in number order. Needed on resume
-    so counters reflect full trial history.
+    """Reconstruct prev_best / no_improve / noise_streak from already-completed
+    trial history, so a resumed run doesn't discard evidence of convergence
+    gathered in earlier sessions.
 
     Args:
         completed_trials: list of optuna.trial.FrozenTrial with
@@ -190,10 +190,7 @@ def replay_stop_state(completed_trials):
         else:
             no_improve += 1
 
-        if improved and 0 < delta < fold_std:
-            noise_streak += 1
-        else:
-            noise_streak = 0
+        noise_streak = noise_streak + 1 if (improved and 0 < delta < fold_std) else 0
 
     return prev_best, no_improve, noise_streak
 
@@ -208,9 +205,9 @@ def main():
         load_if_exists=True,
     )
 
+    # heal any trial left RUNNING by prior kill so history replay reflects true state
     resume_orphaned_trials(study)
 
-    # seed state from any already-completed trials (handles resuming an Optuna study)
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     prev_best, no_improve, noise_streak = replay_stop_state(completed)
 
@@ -221,7 +218,11 @@ def main():
     session_trial_count = 0
 
     for _ in range(MAX_TRIALS):
-        study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
+        try:
+            study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
+        except Exception as e:
+            print(f"trial crashed with unexpected error, continuing: {e}")
+            continue
         trial = study.trials[-1]
         if trial.state != optuna.trial.TrialState.COMPLETE:
             continue
