@@ -2,7 +2,19 @@
 optuna_driver.py
 
 TPE (Tree-structured Parzen Estimator) search over 4-fold CV for MACE multihead finetuning.
-Completed trials (one 4-fold run) cached in `optuna_study.log`, but no fold-level restart.
+Completed trials (one 4-fold run) cached in `optuna_study.log`.
+
+Resumable across kills at any point, including mid-trial:
+    - fold_cache.json caches each completed fold, keyed by trial number.
+    - resume_orphaned_trials() finishes any trial left RUNNING by a prior
+    kill by reconstructing it from storage (already-sampled params are
+    replayed, not resampled) and re-running objective() on it, so cached
+    folds skip straight through and only the interrupted fold onward
+    actually reruns.
+    - replay_stop_state() rebuilds the noise-floor/no-improvement counters
+    from full trial history on every startup, so warm-up and stop
+    conditions behave the same whether this is trial 1 of a fresh study
+    or trial 1 of the Nth resume.
 """
 
 import statistics
@@ -116,6 +128,40 @@ def objective(trial):
     return combined
 
 
+
+def resume_orphaned_trials(study):
+    """Finish any trial left RUNNING by a prior kill (dropped tmux session,
+    SIGKILL, etc.) instead of leaving it stuck in storage indefinitely.
+
+    A RUNNING trial already has its hyperparameters persisted in
+    optuna_study.log from when they were first sampled. Reconstructing a
+    Trial from its storage id and calling objective() on it again replays
+    those same params rather than resampling, and any fold already in
+    fold_cache.json is skipped, so this only redoes the work that was
+    actually interrupted.
+
+    Caution: if a fold's SLURM job was still queued or running on the
+    cluster at the moment of the kill, this will submit a second job for
+    that fold. Check `squeue` before resuming if you're unsure.
+    """
+    orphans = study.get_trials(deepcopy=False, states=(optuna.trial.TrialState.RUNNING,))
+    for frozen in orphans:
+        trial = optuna.trial.Trial(study, frozen._trial_id)
+        print(f"resuming orphaned trial #{trial.number}")
+        try:
+            value = objective(trial)
+        except optuna.TrialPruned as e:
+            study.tell(trial, state=optuna.trial.TrialState.PRUNED)
+            print(f"  trial #{trial.number} pruned on resume: {e}")
+            continue
+        except Exception as e:
+            study.tell(trial, state=optuna.trial.TrialState.FAIL)
+            print(f"  trial #{trial.number} failed on resume: {e}")
+            continue
+        study.tell(trial, value)
+        print(f"  trial #{trial.number} completed on resume: {value:.4f}")
+
+
 def replay_stop_state(completed_trials):
     """Reconstruct prev_best / no_improve / noise_streak by replaying the
     history of already-completed trials in number order. Needed on resume
@@ -161,6 +207,8 @@ def main():
         direction="minimize",
         load_if_exists=True,
     )
+
+    resume_orphaned_trials(study)
 
     # seed state from any already-completed trials (handles resuming an Optuna study)
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
