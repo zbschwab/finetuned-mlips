@@ -103,6 +103,8 @@ def objective(trial):
                 SCRIPT,
                 LOG_DIR,
                 max_retries=MAX_RETRIES,
+                trial_id=trial.number,
+                fold_id=fold_id,
                 job_args=job_args,
                 log_pattern="mace_{job_id}.out",  # must match #SBATCH -o in train_template.sh
             )
@@ -218,11 +220,7 @@ def main():
     session_trial_count = 0
 
     for _ in range(MAX_TRIALS):
-        try:
-            study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
-        except Exception as e:
-            print(f"trial crashed with unexpected error, continuing: {e}")
-            continue
+        study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
         trial = study.trials[-1]
         if trial.state != optuna.trial.TrialState.COMPLETE:
             continue
