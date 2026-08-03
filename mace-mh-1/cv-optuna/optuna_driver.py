@@ -27,7 +27,7 @@ STUDY_NAME = "mace_cv_search"
 HOME_DIR = "/home/zschwab/mace-finetune"
 WORK_DIR = "/work/zschwab/mace-finetune"
 
-SCRIPT = f"{HOME_DIR}/scripts/train_template.sh"
+SCRIPT = f"{HOME_DIR}/scripts/fold_train.sh"
 LOG_DIR = f"{WORK_DIR}/logs/{STUDY_NAME}"
 FOLD_DIR = f"{WORK_DIR}/data/folds"
 STUDY_LOG = f"{HOME_DIR}/cv-optuna/optuna_study.log"
@@ -106,7 +106,7 @@ def objective(trial):
                 trial_id=trial.number,
                 fold_id=fold_id,
                 job_args=job_args,
-                log_pattern="mace_{job_id}.out",  # must match #SBATCH -o in train_template.sh
+                log_pattern="mace_{job_id}.out",  # must match #SBATCH -o in fold_train.sh
             )
         except RuntimeError as e:
             raise optuna.TrialPruned(f"fold {fold_id} failed after retries: {e}")
