@@ -213,11 +213,9 @@ def main():
     completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     prev_best, no_improve, noise_streak = replay_stop_state(completed)
 
-    # Gate warm-up on trials run this session, not trial.number: trial.number
-    # persists across resumes, so it would already exceed N_STARTUP_TRIALS
-    # on any resumed run, disabling the warm-up when it's still needed.
-
-    session_trial_count = 0
+    # Count all completed trials across every past session (via `completed`,
+    # from full study history) so it's correct after killing/restarting sessions
+    session_trial_count = len(completed)
 
     for _ in range(MAX_TRIALS):
         study.optimize(objective, n_trials=1, catch=(optuna.TrialPruned,))
