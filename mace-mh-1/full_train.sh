@@ -1,0 +1,73 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -p gpu
+#SBATCH --gres=gpu:1
+#SBATCH -c 8
+#SBATCH --mem=32G
+#SBATCH -t 00:45:00
+#SBATCH -A loni_mlips01
+#SBATCH -o /work/zschwab/mace-finetune/run-%j/mace_%j.out
+#SBATCH -e /work/zschwab/mace-finetune/run-%j/mace_%j.err
+#SBATCH --mail-user zschwab@tulane.edu
+#SBATCH --mail-type ALL
+
+# Positional args for a full train:
+#   $1 = LR
+#   $2 = WEIGHT_DECAY
+#   $3 = SWA_LR
+#   $4 = SWA_ENERGY_WEIGHT
+#   $5 = SWA_FORCES_WEIGHT
+
+date
+
+LR=$1
+WEIGHT_DECAY=$2
+SWA_LR=$3
+SWA_ENERGY_WEIGHT=$4
+SWA_FORCES_WEIGHT=$5
+
+ENERGY_WEIGHT=1.0
+FORCES_WEIGHT=100.0
+
+export HOME_DIR=/home/$USER/mace-finetune
+export WORK_DIR=/work/$USER/mace-finetune
+
+module load conda/23.11.0
+source /usr/local/packages/conda/23.11.0/etc/profile.d/conda.sh
+conda activate /work/zschwab/.conda/envs/mace-mh-1
+
+RUN_DIR=$WORK_DIR/run-${SLURM_JOB_ID}
+mkdir -p "$RUN_DIR"/{models,checkpoints,logs,results}
+
+python -m mace.cli.run_train \
+--name full_run \
+--train_file data/train_withNi.xyz \
+--valid_fraction 0.1 \
+--foundation_model mh-1 \
+--foundation_head omat_pbe \
+--pt_train_file data/selected_configs_withNi.xyz \
+--work_dir "$RUN_DIR/models" \
+--model_dir "$RUN_DIR/models" \
+--log_dir "$RUN_DIR/logs" \
+--checkpoints_dir "$RUN_DIR/checkpoints" \
+--results_dir "$RUN_DIR/results" \
+--energy_weight "${ENERGY_WEIGHT}" \
+--forces_weight "${FORCES_WEIGHT}" \
+--weight_decay "${WEIGHT_DECAY}" \
+--swa \
+--start_swa 20 \
+--swa_energy_weight "${SWA_ENERGY_WEIGHT}" \
+--swa_forces_weight "${SWA_FORCES_WEIGHT}" \
+--stress_weight 0.0 \
+--lr "${LR}" \
+--swa_lr "${SWA_LR}" \
+--multiheads_finetuning True \
+--E0s "{47: -0.19458509, 28: -0.59150255, 8: -1.55774442, 6: -1.28369203, 1: -1.11167391}" \
+--max_num_epochs 30 \
+--device "cuda"
+
+status=$?
+
+date
+
+exit $status
