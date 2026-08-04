@@ -174,7 +174,7 @@ def restart_job(script_path, log_dir, max_retries=2, **kwargs):
 
 def _load_cache(cache_path):
     p = Path(cache_path)
-    if not p.exists():
+    if not p.exists() or p.stat().st_size == 0:
         return {}
     with open(p) as f:
         return json.load(f)

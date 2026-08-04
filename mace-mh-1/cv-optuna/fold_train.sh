@@ -6,10 +6,10 @@
 #SBATCH --mem=32G
 #SBATCH -t 00:45:00
 #SBATCH -A loni_mlips01
-#SBATCH -o /work/zschwab/mace-finetune/logs/mace_%j.out
-#SBATCH -e /work/zschwab/mace-finetune/logs/mace_%j.err
+#SBATCH -o /work/zschwab/mace-finetune/logs/mace_cv_search/mace_%j.out
+#SBATCH -e /work/zschwab/mace-finetune/logs/mace_cv_search/mace_%j.err
 #SBATCH --mail-user zschwab@tulane.edu
-#SBATCH --mail-type ALL
+#SBATCH --mail-type FAIL
 
 # Positional args (passed via submit_and_wait()):
 #   $1 = TRIAL_ID          (Optuna trial.number, fixed across resubmits/folds)

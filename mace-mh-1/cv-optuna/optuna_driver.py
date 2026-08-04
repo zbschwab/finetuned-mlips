@@ -45,8 +45,8 @@ N_STARTUP_TRIALS = 10  # TPESampler default; ~2 random pts/dim across the 5-para
 
 # weights applied to mean fold RMSE_E and F to combine them into single scalar Optuna minimizes.
 # prevents optimizing one at expense of the other. higher F b/c more sensitive to hyperparams than E
-WEIGHT_E = 0.45
-WEIGHT_F = 0.55
+WEIGHT_E = 0.65
+WEIGHT_F = 0.35
 
 
 def objective(trial):
@@ -126,7 +126,8 @@ def objective(trial):
 
     trial.set_user_attr("fold_rmse_f", fold_rmse_f)
     trial.set_user_attr("fold_rmse_e", fold_rmse_e)
-    trial.set_user_attr("fold_std", statistics.stdev(fold_rmse_f) if len(fold_rmse_f) > 1 else 0.0)
+    fold_combined = [WEIGHT_E*e + WEIGHT_F*f for e, f in zip(fold_rmse_e, fold_rmse_f)]
+    trial.set_user_attr("fold_std", statistics.stdev(fold_combined) if len(fold_combined) > 1 else 0.0)
     combined = WEIGHT_E * statistics.mean(fold_rmse_e) + WEIGHT_F * statistics.mean(fold_rmse_f)
     return combined
 
