@@ -12,6 +12,7 @@ data-processing/incars/*
 data-processing/outcars/*
 data-processing/*.png
 data-processing/**/*.png
+data-processing/find_o2_runs.py
 
 # finetuning data
 training-data/*
