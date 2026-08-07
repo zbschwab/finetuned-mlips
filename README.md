@@ -14,7 +14,7 @@ This project supports two finetuning approaches: direct finetuning, and Optuna-d
 | 4 | `mace-mh-1/cv-optuns/optuna_post-processing.ipynb` | Final training run on the full dataset with the best hyperparameters, model eval |
 | 5 | `mace-mh-1/test_eval.py`, `mace-mh-1/results/post-processing.ipynb` | Evaluate the finetuned model on the held-out test set |
 
-Stages 2, 4, and 5 are documented inline in this README and in their notebooks; stages 1 and 3 get the fuller treatment below since they have the most moving parts. See also [`training-data/README.md`](training-data/README.md) for what each dataset file in this pipeline actually is.
+See also [`training-data/README.md`](training-data/README.md) for what each dataset file in this pipeline actually is.
 
 *(Sections for stages 2, 4, and 5 are still being filled in — more detail coming.)*
 
