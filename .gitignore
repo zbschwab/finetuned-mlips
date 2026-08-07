@@ -15,7 +15,7 @@ data-processing/**/*.png
 
 # finetuning data
 training-data/*
- 
+
 # everything except for pipeline notebooks and folders in model folder
 mace-mh-1/checkpoints/*
 mace-mh-1/logs/*
@@ -25,13 +25,16 @@ mace-mh-1/results/*
 !mace-mh-1/results/post-processing.ipynb
 
 # data cleaning cache contents
-#data-processing/cache/*
+# data-processing/cache/*
 #!data-processing/cache/.gitkeep
 
 # training data
 training-data/*
-!.gitkeep
+training-data/gas-phase-dft-data/*
+!training-data/gas-phase-dft-data/.gitkeep
+!training-data/folds/*
 
 # test scripts (for cv-optuna pipeline)
 mace-mh-1/cv-optuna/test_*
 
+.claude/
