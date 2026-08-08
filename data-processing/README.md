@@ -1,6 +1,6 @@
 # Data Processing
 
-**Goal:** convert VASP relaxation runs stored in Box/Dropbox into a clean set of INCAR/OUTCAR pairs for [`mace-ft-pipeline.ipynb`](../mace-mh-1/mace-ft-pipeline.ipynb) to convert into training data.
+**Goal:** convert VASP relaxation runs stored in Box/Dropbox into a clean set of INCAR/OUTCAR pairs for [`build-training-set.ipynb`](../mace-mh-1/build-training-set.ipynb) to convert into training data.
 
 ## Source datasets
 
@@ -11,7 +11,7 @@
 
 Run `ag-data-cleaning.ipynb` and then `ag-data-selection.ipynb`.
 
-The final list of folder names for selected configs is cached as `screened_foldernames.txt`, which [`mace-ft-pipeline.ipynb`](../mace-mh-1/mace-ft-pipeline.ipynb) reads to determine which downloaded OUTCARs to use.
+The final list of folder names for selected configs is cached as `screened_foldernames.txt`, which [`build-training-set.ipynb`](../mace-mh-1/build-training-set.ipynb) reads to determine which downloaded OUTCARs to use.
 
 `screened_foldernames.txt` currently holds {Ag, C, H, O}-containing configs, `withNi_screened_foldernames.txt` holds {Ag, Ni, C, H, O}.
 
