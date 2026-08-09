@@ -5,33 +5,28 @@ Create these directories before your first run:
 ```bash
 mkdir -p /home/<user>/mace-finetune/scripts
 mkdir -p /home/<user>/mace-finetune/cv-optuna
-mkdir -p /work/<user>/mace-finetune/data/folds
-mkdir -p /work/<user>/mace-finetune/logs/mace_cv_search
+mkdir -p /work/<user>/mace-finetune/data
+mkdir -p /work/<user>/mace-finetune/logs/cv-search
 ```
-
-Rule of thumb: anything you need to survive long-term (scripts, the Optuna study log) goes under `/home`; anything regenerable or high-volume (checkpoints, SLURM `.out`/`.err`, fold data) goes under `/work`.
 
 ## Conda environment
 
+`scp` `mace-mh-1.yml` to `/home/<user>/mace-finetune/`.
+
+Set up your LONI-side conda env once, from `/home/<user>/`:
+
 ```bash
-conda env create -f mace-mh-1/mace-mh-1.yml -p /work/<user>/.conda/envs/mace-mh-1
+module load conda
+conda env create -f /home/<user>/mace-finetune/mace-mh-1.yml -p /work/<user>/.conda/envs/mace-mh-1
 conda activate /work/<user>/.conda/envs/mace-mh-1
+python -c "import mace; import ase; print(mace.__version__)"
 ```
 
-Environment lives on `/work`, not `/home` — it's large and regenerable from the `.yml`, so it doesn't belong in the backed-up, quota-limited tree.
-
-## SLURM
-
-`sbatch`/`sacct` exist only on the login node (`qbc1`) — compute nodes do not have SLURM client binaries. Any script that submits or polls jobs (`submit_and_wait()`, `optuna_driver.py`) must run from the login node, not as a job itself.
-
-```bash
-which sbatch   # /usr/local/bin/sbatch
-which sacct    # /usr/bin/sacct
-```
+Note: If `conda activate` fails right after creation, your shell likely needs a one-time init (`conda init bash`) followed by restarting your shell or `source ~/.bashrc`.
 
 ## tmux (CV/Optuna path only)
 
-`optuna_driver.py` runs for the full duration of the search (potentially hours), polling SLURM in a loop. It must run in a `tmux` session on the login node — not as a SLURM job itself, and not in a plain terminal that dies on disconnect.
+`optuna_driver.py` runs for the full duration of the search (multiple hours), polling SLURM in a loop. It must run in a `tmux` session on the login node.
 
 Direct finetuning does not need tmux: `full_train.sh` submits one `sbatch` job and returns immediately.
 
@@ -44,13 +39,7 @@ python -u optuna_driver.py 2>&1 | tee driver.log
 # reattach: tmux attach -t optuna
 ```
 
-Monitor from a **separate** terminal — don't `tail -f` inside the tmux session:
-
-```bash
-tail -f /home/<user>/mace-finetune/cv-optuna/driver.log
-```
-
-Job status:
+Monitor job status:
 
 ```bash
 squeue -u <user>
