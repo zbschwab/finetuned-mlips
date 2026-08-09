@@ -13,26 +13,20 @@ data-processing/outcars/*
 data-processing/*.png
 data-processing/**/*.png
 data-processing/find_o2_runs.py
-
-# finetuning data
-training-data/*
-
-# everything except for pipeline notebooks and folders in model folder
-mace-mh-1/checkpoints/*
-mace-mh-1/logs/*
-mace-mh-1/models/*
-mace-mh-1/direct-finetune/results/*
-!mace-mh-1/direct-finetune/results/post-processing.ipynb
-
-# data cleaning cache contents
-# data-processing/cache/*
-#!data-processing/cache/.gitkeep
+data-processing/cache/box_EO_Project_reactivity/*
+data-processing/cache/dropbox_O2DissociationSAA_2/*
 
 # training data
 training-data/*
+!training-data/gas-phase-dft-data
+!training-data/folds
 training-data/gas-phase-dft-data/*
-!training-data/gas-phase-dft-data/.gitkeep
-!training-data/folds/*
+training-data/folds/*
+
+# everything except for pipeline notebooks and folders in model folder
+mace-mh-1/direct-finetune/results/*
+!mace-mh-1/direct-finetune/results/post-processing.ipynb
+!mace-mh-1/direct-finetune/results/logs/*
 
 # test scripts (for cv-optuna pipeline)
 mace-mh-1/cv-optuna/test_*
