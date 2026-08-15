@@ -11,13 +11,10 @@ __pycache__/
 
 # pre-processing
 data-processing/.env
-data-processing/incars.zip
-data-processing/outcars.zip
 data-processing/incars/*
 data-processing/outcars/*
 data-processing/*.png
 data-processing/**/*.png
-data-processing/find_o2_runs.py
 data-processing/cache/box_EO_Project_reactivity/*
 data-processing/cache/dropbox_O2DissociationSAA_2/*
 
