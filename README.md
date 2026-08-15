@@ -11,7 +11,7 @@ This project supports two finetuning approaches: direct finetuning, and Optuna-d
 | 1 | `data-processing/` | Pull raw VASP relaxations from Box/DropBox, filter to relaxations on select elements |
 | 2 | `mace-mh-1/build-training-set.ipynb` | Write selected OUTCARs to a `.xyz` to build the multihead replay training set |
 | 3 | `mace-mh-1/cv-optuna/` | K-fold cross-validation + Optuna hyperparameter search (see [README](mace-mh-1/cv-optuna/README.md)) |
-| 4 | `mace-mh-1/cv-optuns/optuna_post-processing.ipynb` | Final training run on the full dataset with the best hyperparameters, model eval |
+| 4 | `mace-mh-1/cv-optuna/optuna_post-processing.ipynb` | Final training run on the full dataset with the best hyperparameters, model eval |
 | 5 | `mace-mh-1/test_eval.py`, `mace-mh-1/results/post-processing.ipynb` | Evaluate the finetuned model on the held-out test set |
 
 See [`training-data/README.md`](training-data/README.md) for information on each dataset file.
@@ -25,26 +25,44 @@ conda env create -f mace-mh-1/mace-mh-1.yml
 conda activate mace-mh-1
 ```
 
-Note: Training itself (`mace.cli.run_train`) is run on LONI.
-
 ## Repository layout
 
 ```
-data-processing/       Raw VASP data -> cleaned/screened OUTCARs (see below)
-  ag-data-cleaning.ipynb    filter folder names by element/calc type, screen for relaxations
-  ag-data-selection.ipynb   download OUTCAR/INCAR, screen for convergence
-  cache/                    intermediate folder-name lists, per source dataset
-  incars/, outcars/         downloaded VASP files (gitignored)
-
-training-data/          All .xyz datasets used for finetuning/CV/eval (see training-data/README.md)
-
-mace-mh-1/               Finetuning pipeline for the mace-mh-1 foundation model
-  build-training-set.ipynb   OUTCAR -> .xyz, build replay/finetuning dataset, launch training
-  cv-optuna/                 cross-validation + hyperparameter search (see cv-optuna/README.md)
-  full_train.sh              final training run (SLURM)
-  test_eval.py, test_eval.sh single-point eval of a trained model vs. DFT reference
-  results/                    eval outputs + post-processing notebook
-  models/                     trained model checkpoints (gitignored) + model card
+.
+├── data-processing/
+│   ├── ag-data-cleaning.ipynb
+│   ├── ag-data-selection.ipynb
+│   ├── cache/
+│   ├── incars/
+│   ├── outcars/
+│   └── README.md
+├── mace-mh-1/
+│   ├── build-training-set.ipynb
+│   ├── cv-optuna/
+│   │   ├── cv_utils.py
+│   │   ├── cv-results/
+│   │   │   ├── logs/
+│   │   │   ├── optuna_study.log
+│   │   │   └── zeroshot.csv
+│   │   ├── cv-setup.ipynb
+│   │   ├── fold_train.sh
+│   │   ├── full_train.sh
+│   │   ├── optuna_driver.py
+│   │   └── optuna_post-processing.ipynb
+│   ├── direct-finetune/
+│   │   ├── direct_tune.sh
+│   │   ├── README.md
+│   │   └── results/
+│   │       ├── logs/
+│   │       └── post-processing.ipynb
+│   ├── loni-setup.md
+│   ├── mace-mh-1.yml
+│   ├── test_eval.py
+│   └── test_eval.sh
+├── README.md
+└── training-data/
+    ├── folds/
+    └── gas-phase-dft-data/
 ```
 
 ---
@@ -72,5 +90,3 @@ Notebooks run in order:
 
 **Notes:**
 - Both notebooks are designed to be re-run per source dataset via a `CACHE`/`PREFIX` variable near the top of each (see notebooks' own markdown for details).
-- Box/DropBox authentication cells need to run only once per token refresh, not on every execution — see the "one-time" markdown notes in `ag-data-cleaning.ipynb`.
-- This stage is inherently manual/iterative, particularly the final energy-trajectory spot-check. Cells are expected to run out of order with exclude-lists adjusted during inspection, rather than top-to-bottom execution in one pass.

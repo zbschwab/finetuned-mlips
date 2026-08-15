@@ -31,7 +31,8 @@ training-data/folds/*
 # everything except for pipeline notebooks and folders in model folder
 mace-mh-1/direct-finetune/results/*
 !mace-mh-1/direct-finetune/results/post-processing.ipynb
-!mace-mh-1/direct-finetune/results/logs/*
+!mace-mh-1/direct-finetune/results/logs/
+mace-mh-1/direct-finetune/results/logs/*
 
 # test scripts (for cv-optuna pipeline)
 mace-mh-1/cv-optuna/test_*
