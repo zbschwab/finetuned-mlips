@@ -14,8 +14,11 @@ See the [docs](https://mace-docs.readthedocs.io/en/latest/guide/multihead_finetu
 
 ## Before running
 - Fill in parameters at the top of the script (`ENERGY_WEIGHT` through `SWA_LR`).
-- Confirm `train_withNi.xyz` / `selected_configs_withNi.xyz` exist under
-  `/work/<user>/mace-finetune/data` on the machine you plan to train on.
+- Edit `E0s` if using different atoms than {Ag, Ni, C, H, O}
+- Confirm `train.xyz` / `selected_configs.xyz` exist under either:
+  - (local) `finetuned-mlips/training-data/` or
+  - (LONI) `/work/<user>/mace-finetune/data/`
+Move the data files there if not.
 
 ## Run on LONI
 ```bash
