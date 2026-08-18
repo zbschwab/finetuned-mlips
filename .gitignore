@@ -22,6 +22,7 @@ data-processing/cache/dropbox_O2DissociationSAA_2/*
 training-data/*
 !training-data/gas-phase-dft-data
 !training-data/folds
+!training-data/README.md
 training-data/gas-phase-dft-data/*
 training-data/folds/*
 
@@ -33,5 +34,7 @@ mace-mh-1/direct-finetune/results/logs/*
 
 # test scripts (for cv-optuna pipeline)
 mace-mh-1/cv-optuna/test_*
+
+mace-mh-1/cv-optuna/cv-results/*
 
 .claude/

@@ -19,7 +19,6 @@ EPOCH_PATTERN = re.compile(
     r"RMSE_F=\s*([\d.]+) meV / A, "
 )
 
-# check this
 TERMINAL_STATES = {
     "COMPLETED",
     "FAILED",
@@ -77,6 +76,7 @@ def submit_and_wait(
     log_pattern="mace_t{trial_id}_f{fold_id}_{job_id}.out",
     poll_interval=30,
     timeout=None,
+    job_id_cache=None,
 ):
     """Submit sbatch script, then poll sacct until job reaches a terminal state.
 
@@ -94,6 +94,8 @@ def submit_and_wait(
         log_pattern: log filename pattern w/ job_id placeholder
         poll_interval: secs. between sacct polls
         timeout: (optional) max secs. to wait before terminating
+        job_id_cache: (optional) path to job_ids.json. If given, records this
+            job's id/state as soon as each is known — see record_job_id().
 
     Returns:
         tuple: (str: job_id, str: state, str: log_path)
@@ -117,10 +119,20 @@ def submit_and_wait(
     job_id = m.group(1)
     log_path = f"{log_dir}/{log_pattern.format(trial_id=trial_id, fold_id=fold_id, job_id=job_id)}"
 
+    # record job_id -> (trial, fold) immediately: #SBATCH -o/-e (the only
+    # thing that actually determines names/paths on LONI) is static text and
+    # can't carry trial/fold info, so this mapping exists nowhere else. Write
+    # it now, before polling, so a driver crash mid-poll still leaves a
+    # record of which trial/fold this job_id belongs to.
+    if job_id_cache is not None:
+        record_job_id(trial_id, fold_id, job_id, "SUBMITTED", job_id_cache)
+
     # poll log output from LONI with sacct
     start_time = time.time()
     while True:
         if timeout is not None and (time.time() - start_time) > timeout:
+            if job_id_cache is not None:
+                record_job_id(trial_id, fold_id, job_id, "LOCAL_TIMEOUT", job_id_cache)
             raise TimeoutError(f"Job {job_id} did not reach a terminal state within {timeout}s")
 
         sacct_result = subprocess.run(
@@ -147,6 +159,8 @@ def submit_and_wait(
             # for a completed job, don't hand back a log_path that isn't
             # readable yet — keep polling until it shows up (or timeout)
             if state != "COMPLETED" or os.path.exists(log_path):
+                if job_id_cache is not None:
+                    record_job_id(trial_id, fold_id, job_id, state, job_id_cache)
                 return job_id, state, log_path
 
         time.sleep(poll_interval)
@@ -206,6 +220,45 @@ def save_fold_result(trial_number, fold_id, rmse_e, rmse_f, cache_path):
     """
     cache = _load_cache(cache_path)
     cache[f"t{trial_number}_f{fold_id}"] = {"RMSE_E_per_atom": rmse_e, "RMSE_F": rmse_f}
+    tmp = Path(cache_path).with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(cache, f)
+    tmp.replace(cache_path)
+
+
+def record_job_id(trial_number, fold_id, job_id, state, cache_path):
+    """Record one sbatch submission's job ID and last-known state, keyed by
+    trial/fold. This is the only place this mapping is ever written down:
+    #SBATCH -o/-e paths are static text (can't reference $TRIAL_ID/$FOLD_ID),
+    so nothing about which trial/fold a given `mace_<job_id>.out` on LONI
+    belongs to is recoverable after the fact otherwise.
+
+    Appends to a list per trial/fold rather than overwriting, since a fold
+    can be resubmitted (on TIMEOUT, via restart_job), producing more than
+    one job_id for the same trial/fold. Calling this again for a job_id
+    already in the list updates its state in place.
+
+    Atomic write (safe against a kill mid-write), same pattern as
+    save_fold_result.
+
+    Args:
+        trial_number: Optuna trial.number
+        fold_id: fold index
+        job_id: SLURM job ID (str)
+        state: "SUBMITTED" (recorded immediately, before polling), a SLURM
+            terminal state (see TERMINAL_STATES), or "LOCAL_TIMEOUT" if our
+            own poll loop gave up before SLURM reported a terminal state.
+        cache_path: path to job_ids.json
+    """
+    cache = _load_cache(cache_path)
+    key = f"t{trial_number}_f{fold_id}"
+    entries = cache.setdefault(key, [])
+    for entry in entries:
+        if entry["job_id"] == job_id:
+            entry["state"] = state
+            break
+    else:
+        entries.append({"job_id": job_id, "state": state})
     tmp = Path(cache_path).with_suffix(".tmp")
     with open(tmp, "w") as f:
         json.dump(cache, f)

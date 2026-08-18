@@ -1,11 +1,11 @@
 """
 test_eval.py
 
-Single-point MLIP predictions on test set (train_withNi.xyz) vs. DFT reference.
+Single-point MLIP predictions vs. DFT reference.
 Run once on the held-out test set (test.xyz) only.
 
 Run this script with the paths to your test set, model, and desired output 
-location on LONI:
+location on LONI (change directory paths!):
 
 sbatch test_eval.sh \
     /work/zschwab/mace-finetune/data/test.xyz \

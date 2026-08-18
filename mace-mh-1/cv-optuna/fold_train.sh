@@ -60,7 +60,7 @@ python -m mace.cli.run_train \
 --valid_file "${FOLD_VALID_FILE}" \
 --foundation_model mh-1 \
 --foundation_head omat_pbe \
---pt_train_file data/selected_configs_withNi.xyz \
+--pt_train_file data/selected_configs.xyz \
 --work_dir "$RUN_DIR/models" \
 --model_dir "$RUN_DIR/models" \
 --log_dir "$RUN_DIR/logs" \

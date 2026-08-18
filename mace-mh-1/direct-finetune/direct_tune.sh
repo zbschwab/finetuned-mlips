@@ -35,11 +35,11 @@ mkdir -p "$RUN_DIR"/{models,checkpoints,logs,results}
 
 python -m mace.cli.run_train \
 --name full_run \
---train_file "$WORK_DIR/data/train_withNi.xyz" \
+--train_file "$WORK_DIR/data/train.xyz" \
 --valid_fraction 0.1 \
 --foundation_model mh-1 \
 --foundation_head omat_pbe \
---pt_train_file "$WORK_DIR/data/selected_configs_withNi.xyz" \
+--pt_train_file "$WORK_DIR/data/selected_configs.xyz" \
 --work_dir "$RUN_DIR/models" \
 --model_dir "$RUN_DIR/models" \
 --log_dir "$RUN_DIR/logs" \

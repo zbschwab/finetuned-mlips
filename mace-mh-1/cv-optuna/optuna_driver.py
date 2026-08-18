@@ -32,6 +32,7 @@ LOG_DIR = f"{WORK_DIR}/logs/{STUDY_NAME}"
 FOLD_DIR = f"{WORK_DIR}/data/folds"
 STUDY_LOG = f"{HOME_DIR}/cv-optuna/optuna_study.log"
 FOLD_CACHE = f"{HOME_DIR}/cv-optuna/fold_cache.json"
+JOB_ID_CACHE = f"{HOME_DIR}/cv-optuna/job_ids.json"
 os.makedirs(LOG_DIR, exist_ok=True)
 
 N_FOLDS = 4
@@ -107,6 +108,7 @@ def objective(trial):
                 fold_id=fold_id,
                 job_args=job_args,
                 log_pattern="mace_{job_id}.out",  # must match #SBATCH -o in fold_train.sh
+                job_id_cache=JOB_ID_CACHE,  # only place trial/fold -> job_id is recorded
             )
         except RuntimeError as e:
             raise optuna.TrialPruned(f"fold {fold_id} failed after retries: {e}")

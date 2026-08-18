@@ -11,9 +11,7 @@
 
 Run `ag-data-cleaning.ipynb` and then `ag-data-selection.ipynb`.
 
-The final list of folder names for selected configs is cached as `screened_foldernames.txt`, which [`build-training-set.ipynb`](../mace-mh-1/build-training-set.ipynb) reads to determine which downloaded OUTCARs to use.
-
-`screened_foldernames.txt` currently holds {Ag, C, H, O}-containing configs, `withNi_screened_foldernames.txt` holds {Ag, Ni, C, H, O}.
+The final list of folder names for selected configs is cached as `foldernames-3.txt`, which [`build-training-set.ipynb`](../mace-mh-1/build-training-set.ipynb) reads to determine which downloaded OUTCARs to use.
 
 Auth cells are marked "one-time" in `ag-data-cleaning.ipynb`; run once per token refresh, not on every execution.
 
