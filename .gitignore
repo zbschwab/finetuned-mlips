@@ -12,11 +12,15 @@ __pycache__/
 # pre-processing
 data-processing/.env
 data-processing/incars/*
+!data-processing/incars/.gitkeep
 data-processing/outcars/*
+!data-processing/outcars/.gitkeep
 data-processing/*.png
 data-processing/**/*.png
 data-processing/cache/box_EO_Project_reactivity/*
+!data-processing/cache/box_EO_Project_reactivity/.gitkeep
 data-processing/cache/dropbox_O2DissociationSAA_2/*
+!data-processing/cache/dropbox_O2DissociationSAA_2/.gitkeep
 
 # training data
 training-data/*
